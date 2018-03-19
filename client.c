@@ -1,6 +1,5 @@
+#include "messages.h"
 #include "common.h"
-
-#define MSG_LEN 128
 
 int main(int argc, char const *argv[])
 {
@@ -14,12 +13,24 @@ int main(int argc, char const *argv[])
     char buf[MSG_LEN];
     int addr_len = sizeof(target_addr);
 
-    while (1)
+    uint32_t sended = 0;
+    FILE * file = fopen("test.wav", "r");
+    fseek(file, 0, SEEK_END);
+    uint32_t length = ftell(file); 
+    printf("length = %d\n", length);
+    rewind(file);
+    while (0 == feof(file) || EOF != fread(buf, MSG_LEN, 1, file))
     {
-        memset(buf, 0, sizeof(buf));
-        scanf("%s", buf);
         rc = (int) sendto(fd, (void *) buf, MSG_LEN, 0, (const struct sockaddr *) &target_addr, addr_len);
+        if (!rc) break;
+        // printf("%d sended\n", sended+=MSG_LEN);
+        sended += rc;
+        memset(buf, 0, sizeof(buf));
+        usleep(500);
+        if (sended > length) break;
     }
+    rc = (int) sendto(fd, (void *) buf, MSG_LEN, 0, (const struct sockaddr *) &target_addr, addr_len);
+    printf("done\n");
     close(fd);
     return 0;
 }

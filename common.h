@@ -8,11 +8,14 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/sendfile.h>
 
 #define RX_ADDR "127.0.0.1"
 #define RX_PORT 32000
 #define TX_ADDR "127.0.0.1"
 #define TX_PORT 33000
+
+#define MSG_LEN 1024
 
 int open_socket_rx(int * fd, struct sockaddr * addr);
 int open_socket_tx(int * fd, struct sockaddr * addr);

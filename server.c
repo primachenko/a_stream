@@ -1,7 +1,5 @@
 #include "common.h"
 
-#define MSG_LEN 128
-
 int main(int argc, char const *argv[])
 {
     printf("this is server\n");
@@ -15,12 +13,25 @@ int main(int argc, char const *argv[])
     char buf[MSG_LEN];
     uint32_t addr_len = sizeof(target_addr);
 
+    FILE * file = fopen("test.wav", "r");
+    fseek(file, 0, SEEK_END);
+    int length = ftell(file);
+    fclose(file);
+    file = fopen("copy.wav", "w");
+    if (!file) return -2;
+    int recvd = 0;
     while (1)
     {
         memset(buf, 0, sizeof(buf));
         rc = (int) recvfrom(fd, buf, MSG_LEN, 0, (struct sockaddr *) &target_addr, &addr_len);
-        printf("%s\n", buf);
+        if (!rc) break;
+        printf("%d recv\n", recvd+=rc);
+        fwrite(buf, MSG_LEN, 1, file);
+        if (recvd > length) break;
     }
+    printf("transmission done, length = %d\n", length);
+    fflush(file);
+    fclose(file);
     close(fd);
     return 0;
 }
