@@ -1,5 +1,5 @@
 #define MAX_PAYLOAD_LEN 1024
-
+#include <stdint.h>
 enum message_flags
 {
 	message_flag_min = 0,
