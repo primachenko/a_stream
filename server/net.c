@@ -27,7 +27,7 @@ int open_socket(int * fd, struct sockaddr * addr)
     return 0;
 }
 
-int recv_message(int fd, struct sockaddr * addr, void * data)
+int recv_message(int fd, struct sockaddr * addr, void ** data)
 {
     int rc;
 
@@ -36,7 +36,7 @@ int recv_message(int fd, struct sockaddr * addr, void * data)
 
     uint16_t addr_len = sizeof(*addr);
 
-    rc = recvfrom(fd, (void *) &header, sizeof(header), 0, (struct sockaddr *) addr, (socklen_t *) &addr_len);
+    rc = recvfrom(fd, (void *) &header, sizeof(header_t), 0, (struct sockaddr *) addr, (socklen_t *) &addr_len);
     if (!rc) return -1;
 
     if (header.length == 0) return 0;
@@ -44,12 +44,12 @@ int recv_message(int fd, struct sockaddr * addr, void * data)
     uint8_t * payload = (uint8_t *) malloc(sizeof(message_t) + header.length);
     if (payload == NULL) return -1;
 
-    data = payload;
+    *data = payload;
     memcpy((void *) payload, (void *) &header, sizeof(header));
     payload += sizeof(header);
-
     rc = recvfrom(fd, payload, header.length, 0, (struct sockaddr *) addr, (socklen_t *) &addr_len);
     if (!rc) return -1;
+
 
     return 0;
 }

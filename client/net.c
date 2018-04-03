@@ -1,11 +1,11 @@
 #include "net.h"
 
-int open_socket(int * fd, struct sockaddr * addr)
+int open_socket(net_t * net)
 {
     int rc;
     rc = socket(AF_INET, SOCK_DGRAM, 0);
     if (!rc) return -1;
-    *fd = rc;
+    net->fd = rc;
 
     struct sockaddr_in my_addr;
     memset(&my_addr, 0, sizeof(my_addr));
@@ -14,7 +14,7 @@ int open_socket(int * fd, struct sockaddr * addr)
     my_addr.sin_port = htons(TX_PORT);
 
     socklen_t addr_len = sizeof(my_addr);
-    rc = bind(*fd, (const struct sockaddr *)&my_addr, addr_len);
+    rc = bind(net->fd, (const struct sockaddr *)&my_addr, addr_len);
     if (0 != rc) return -2;
 
     struct sockaddr_in target_addr;
@@ -23,11 +23,28 @@ int open_socket(int * fd, struct sockaddr * addr)
     target_addr.sin_addr.s_addr = inet_addr(RX_ADDR);
     target_addr.sin_port = htons(RX_PORT);
 
-    memcpy(addr, &target_addr, sizeof(target_addr));
+    memcpy(&net->addr, &target_addr, sizeof(target_addr));
+
     return 0;
 }
 
-int send_message(int fd, struct sockaddr * addr, uint8_t flags, void * data, uint16_t data_len)
+int close_socket(net_t * net)
+{
+    if (net->fd)
+    {
+        close(net->fd);
+    }
+    else
+    {
+        return -1;
+    }
+
+    memset(&net->addr, 0, sizeof(net->addr));
+
+    return 0;
+}
+
+int send_message(net_t * net, uint8_t flags, void * data, uint16_t data_len)
 {
     int rc;
 
@@ -37,15 +54,45 @@ int send_message(int fd, struct sockaddr * addr, uint8_t flags, void * data, uin
     header.length = data_len;
     header.flags = flags;
 
-    uint16_t addr_len = sizeof(*addr);
+    uint16_t addr_len = sizeof(net->addr);
 
-    rc = sendto(fd, (void *) &header, sizeof(header), 0, (const struct sockaddr *) addr, (socklen_t) addr_len);
+    rc = sendto(net->fd, (void *) &header, sizeof(header), 0, &net->addr, (socklen_t) addr_len);
+    if (!rc) return -1;
+    net->byte_counter += sizeof(header);
+
+    if (header.length == 0) return 0;
+
+    rc = sendto(net->fd, (void *) data, header.length, 0, &net->addr, (socklen_t) addr_len);
+    if (!rc) return -1;
+    net->byte_counter += header.length;
+    printf("counter = %lld\n", net->byte_counter);
+
+    return 0;
+}
+
+int recv_message(net_t * net, void ** data)
+{
+    int rc;
+
+    header_t header;
+    memset(&header, 0, sizeof(header));
+
+    uint16_t addr_len = sizeof(net->addr);
+
+    rc = recvfrom(net->fd, (void *) &header, sizeof(header_t), 0, &net->addr, (socklen_t *) &addr_len);
     if (!rc) return -1;
 
     if (header.length == 0) return 0;
 
-    rc = sendto(fd, (void *) data, header.length, 0, (const struct sockaddr *) addr, (socklen_t) addr_len);
+    uint8_t * payload = (uint8_t *) malloc(sizeof(message_t) + header.length);
+    if (payload == NULL) return -1;
+
+    *data = payload;
+    memcpy((void *) payload, (void *) &header, sizeof(header));
+    payload += sizeof(header);
+    rc = recvfrom(net->fd, payload, header.length, 0, &net->addr, (socklen_t *) &addr_len);
     if (!rc) return -1;
+
 
     return 0;
 }
