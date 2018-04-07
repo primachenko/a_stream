@@ -96,3 +96,147 @@ int recv_message(net_t * net, void ** data)
 
     return 0;
 }
+
+/*void *udp_listener(void *arg)
+{
+  int bytes_recv, mysocket, client_addr_size;
+  char buf[ALDENLEN];
+  char *addr;
+  struct sockaddr_in sockaddr_in;
+  struct sockaddr_in client_addr;
+  struct sockaddr_in local_addr;
+  struct hostent *hst;
+  socklen_t fromlen;
+  pthread_t thread;
+
+  char *all = ALLOW_SEND;
+  char *den = DENY_SEND;
+  
+  if ((mysocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+  {
+    error("socket() failed");
+  }
+
+  local_addr.sin_family = AF_INET;
+  local_addr.sin_port = htons(MYPORT);
+  local_addr.sin_addr.s_addr = INADDR_ANY;
+
+  if (bind(mysocket, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0)
+  {
+    printf("CLIENT 1 type: search for a free port\n");
+    int i = 0;
+    while(i < PORTRANGE)
+    {
+      i++;
+      local_addr.sin_port = htons(MYPORT + i);
+      if (!bind(mysocket, (struct sockaddr *)&local_addr, sizeof(local_addr)))
+      {
+           break;
+      }
+    }
+  }
+
+  client_addr_size = sizeof(struct sockaddr_in);
+
+  printf("CLIENT 1 type: listening broadcast\n");
+
+  tcp_send.allow = 0;
+
+  while (1) 
+  {
+    if ((bytes_recv = recvfrom(mysocket, &buf[0], sizeof(buf) - 1, 0, (struct sockaddr *)&client_addr, &client_addr_size)) < 0)
+        {
+            error("recvfrom");
+        }
+    hst = gethostbyaddr((char *)&client_addr.sin_addr, 4, AF_INET);
+    addr = (char*)inet_ntoa(client_addr.sin_addr);
+    buf[bytes_recv] = 0;
+   
+    if(!strcmp(buf, all))
+    {
+        if(tcp_send.allow == 0)
+        {
+            pthread_mutex_lock(&tcp_send.mutex);
+            tcp_send.allow = 1;
+            pthread_mutex_unlock(&tcp_send.mutex);
+            pthread_create(&thread, NULL, tcp_sender, (void*)addr);
+        }
+    }
+    if (!strcmp(buf, den))
+    { 
+        pthread_mutex_lock(&tcp_send.mutex);
+        tcp_send.allow = 0;
+        pthread_mutex_unlock(&tcp_send.mutex);
+        pthread_cancel(thread);
+    }
+  }
+
+void *udp_broadcast(void *arg)
+{
+    int sock, n, port, K;
+    char *msgf, *msgs, *ip;
+    unsigned int length;
+    struct sockaddr_in server;
+    struct hostent *hp;
+
+    ip = ((char**)arg)[1];
+    K = atoi(((char**)arg)[2]);
+
+    printf("SERVER: start with arg: IP = %s, K = %d\n", ip, K);
+    fflush(stdout);
+
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) 
+    {
+        error("socket() failed");
+    }
+    server.sin_family = AF_INET;
+    hp = gethostbyname(ip);
+
+    if (hp == 0) 
+    {
+        error("gethostbyname() failed");
+    }
+
+    bcopy((char *)hp->h_addr_list[0], (char *)&server.sin_addr, hp->h_length);
+    length = sizeof(struct sockaddr_in);
+
+    while(1)
+    {   
+        //вещание для клиенов первого типа
+        port = CLIFTPORT;
+        if(qpacket.elements < QUEUELEN)
+        {
+            msgf = ALLOW_SEND;
+        } else {
+            msgf = DENY_SEND;
+        }
+        server.sin_port = htons(port);
+        for(int i = 0; i < PORTRANGE; i++)
+        {
+            if ((n = sendto(sock,msgf,ALDENLEN,0,(const struct sockaddr *)&server,length)) < 0) 
+            {
+                error("sendto() failed");
+            }
+            server.sin_port = htons(port + i);
+        }
+        //вещание для клиентов второго типа
+        port = CLISTPORT;
+        if(qpacket.elements > 0)
+        {
+            msgs = ALLOW_RECIEV;
+        } else {
+            msgs = DENY_RECIEV;
+        }
+        server.sin_port = htons(port);
+        for(int i = 0; i < PORTRANGE; i++)
+        {
+            if ((n = sendto(sock,msgs,ALDENLEN,0,(const struct sockaddr *)&server,length)) < 0) 
+            {
+                error("sendto() failed");
+            }
+            server.sin_port = htons(port+i);
+        }   
+        sleep(K);
+    }
+}
+}*/
