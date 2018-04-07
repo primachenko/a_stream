@@ -4,9 +4,9 @@
 #include "config.h"
 #include "messages.h"
 
-#define RX_ADDR "192.168.0.105"
+#define RX_ADDR "127.0.0.1"
 #define RX_PORT 32000
-#define TX_ADDR "192.168.0.105"
+#define TX_ADDR "127.0.0.1"
 #define TX_PORT 33000
 
 int open_socket(net_t * net);
