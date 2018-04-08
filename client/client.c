@@ -1,6 +1,7 @@
 #include "config.h"
 #include "net.h"
 #include "sound.h"
+#include "handlers.h"
 
 int main(int argc, char const *argv[])
 {
@@ -16,17 +17,56 @@ int main(int argc, char const *argv[])
 
     memset(config, 0, sizeof(*config));
 
-    rc = open_socket(&config->net);
+    rc = open_socket(&config->net.tx_fd);
     if (0 != rc)
     {
-        printf("open_socket failed\n");
+        printf("open_socket tx failed\n");
         return -1;
     }
 
-    rc = create_capture_device(&config->sound);
+    rc = open_socket(&config->net.rx_fd);
+    if (0 != rc)
+    {
+        printf("open_socket rx failed\n");
+        return -1;
+    }
+
+    //-!- todo chain
+    fill_inet_sockaddr(&config->net, (char *) argv[1], RX_PORT);
+
+    //-!- va_args
+    rc = sound_init_sample_spec(&config->sound, 0, 0, 0);
+    if (0 != rc)
+    {
+        printf("init_sample_spec failed\n");
+        return -1;
+    }
+
+    rc = sound_create_capture_device(&config->sound);
     if (0 != rc)
     {
         printf("create_capture_device failed\n");
+        return -1;
+    }
+
+    rc = sound_create_playback_device(&config->sound);
+    if (0 != rc)
+    {
+        printf("sound_create_playback_device failed\n");
+        return -1;
+    }
+
+    rc = fds_init(&config->net);
+    if (0 != rc)
+    {
+        printf("fds_init failed\n");
+        return -1;
+    }
+
+    rc = pthread_create(&config->handlers_tid, NULL, fds_handle, (void *) config);
+    if (0 != rc)
+    {
+        printf("pthread_create failed\n");
         return -1;
     }
 
@@ -43,7 +83,7 @@ int main(int argc, char const *argv[])
 
     while (config->mask_state & 0x000001)
     {
-        rc = read_data(&config->sound, buf, MAX_PAYLOAD_LEN);
+        rc = sound_read_data(&config->sound, buf, MAX_PAYLOAD_LEN);
         if (0 != rc) break;
 
         rc = send_message(&config->net, message_flag_new, buf, MAX_PAYLOAD_LEN);
@@ -59,17 +99,31 @@ int main(int argc, char const *argv[])
         }
     }
 
-    rc = destroy_capture_sound_device(&config->sound);
+    rc = pthread_cancel(config->handlers_tid);
+    if (0 != rc)
+    {
+        printf("pthread_cancel failed\n");
+        return -1;
+    }
+
+    rc = sound_destroy_capture_sound_device(&config->sound);
     if (0 != rc)
     {
         printf("destroy_sound_device failed\n");
         return -1;
     }
 
-    rc = close_socket(&config->net);
+    rc = close_socket(&config->net.tx_fd);
     if (0 != rc)
     {
-        printf("close_socket failed\n");
+        printf("close_socket tx failed\n");
+        return -1;
+    }
+
+    rc = close_socket(&config->net.rx_fd);
+    if (0 != rc)
+    {
+        printf("close_socket rx failed\n");
         return -1;
     }
 

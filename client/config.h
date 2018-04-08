@@ -14,19 +14,24 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <pthread.h>
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
 typedef struct
 {
-    int fd;
+    int tx_fd;
+    int rx_fd;
+    struct pollfd pollfds;
     struct sockaddr addr;
+    struct sockaddr brd_addr;
     uint64_t byte_counter;
 } net_t;
 
 typedef struct
 {
-    pa_simple * device;
+    pa_simple * playback;
+    pa_simple * capture;
     pa_sample_spec sample_spec;
 } sound_t;
 
@@ -35,6 +40,7 @@ typedef struct
     net_t net;
     sound_t sound;
     uint8_t mask_state;
+    pthread_t handlers_tid;
 } config_t;
 
 #endif /* CONFIG_H */
