@@ -23,13 +23,22 @@ static int rx_fd_handle(config_t * config)
     return 0;
 }
 
-static int brd_message_handle(config_t * config)
+static int brd_message_handle(config_t * config, message_t * message)
 {
     return 0;
 }
 
 static int brd_fd_handle(config_t * config)
 {
+    int rc;
+    message_t * data;
+
+    rc = recv_brd_message(&config->net, (void **) &data);;
+    if (0 != rc) return -1;
+
+    rc = brd_message_handle(config, data);
+    if (0 != rc) return -1;
+
     return 0;
 }
 

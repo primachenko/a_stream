@@ -22,10 +22,14 @@ typedef struct
 {
     int tx_fd;
     int rx_fd;
+    int br_fd; // in progress
     struct pollfd pollfds;
     struct sockaddr addr;
-    struct sockaddr brd_addr;
+    struct sockaddr br_addr; //in progress
     uint64_t byte_counter;
+    uint16_t tx_port; //todo
+    uint16_t rx_port; //todo
+    uint16_t br_port; //todo
 } net_t;
 
 typedef struct

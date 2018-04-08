@@ -31,8 +31,36 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    rc = open_socket(&config->net.br_fd);
+    if (0 != rc)
+    {
+        printf("open_socket br failed\n");
+        return -1;
+    }
+
+    //-!- for test only
+    config->net.tx_port = atoi(argv[1]);
+    config->net.rx_port = atoi(argv[2]);
+    config->net.br_port = atoi(argv[3]);
+
     //-!- todo chain
-    fill_inet_sockaddr(&config->net, (char *) argv[1], RX_PORT);
+    fill_inet_sockaddr_rx(&config->net, RX_ADDR, config->net.tx_port);
+
+    rc = bind_rx_fd(&config->net);
+    if (0 != rc)
+    {
+        printf("bind_rx_fd failed\n");
+        return -1;
+    }
+
+    fill_inet_sockaddr_br(&config->net, "255.255.255.255", config->net.br_port);
+
+    rc = bind_br_fd(&config->net);
+    if (0 != rc)
+    {
+        printf("bind_br_fd failed\n");
+        return -1;
+    }
 
     //-!- va_args
     rc = sound_init_sample_spec(&config->sound, 0, 0, 0);
