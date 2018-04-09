@@ -23,13 +23,14 @@ typedef struct
     int tx_fd;
     int rx_fd;
     int br_fd; // in progress
-    struct pollfd pollfds;
+    struct pollfd pollfds[2];
     struct sockaddr addr;
     struct sockaddr br_addr; //in progress
     uint64_t byte_counter;
     uint16_t tx_port; //todo
     uint16_t rx_port; //todo
     uint16_t br_port; //todo
+    uint16_t br_port2; //todo
 } net_t;
 
 typedef struct
@@ -45,6 +46,7 @@ typedef struct
     sound_t sound;
     uint8_t mask_state;
     pthread_t handlers_tid;
+    pthread_t txthread_tid;
 } config_t;
 
 #endif /* CONFIG_H */

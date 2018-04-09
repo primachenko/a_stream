@@ -94,43 +94,50 @@ int main(int argc, char const *argv[])
     rc = pthread_create(&config->handlers_tid, NULL, fds_handle, (void *) config);
     if (0 != rc)
     {
-        printf("pthread_create failed\n");
+        printf("pthread_create fds_handle failed\n");
         return -1;
     }
 
-    header_t header;
-    memset(&header, 0, sizeof(header));
+    rc = pthread_create(&config->txthread_tid, NULL, tx_pthread, (void *) config);
+    if (0 != rc)
+    {
+        printf("pthread_create tx_pthread failed\n");
+        return -1;
+    }
 
-    uint8_t buf[MAX_PAYLOAD_LEN];
-    config->mask_state |= 0x000001;
+    //-!-handle user input
 
     struct pollfd fds;
-    memset(&fds, 0, sizeof(fds));
-    fds.fd = STDIN_FILENO;
+    fds.fd = 0;
     fds.events |= POLLIN;
 
-    while (config->mask_state & 0x000001)
+    while (1)
     {
-        rc = sound_read_data(&config->sound, buf, MAX_PAYLOAD_LEN);
-        if (0 != rc) break;
-
-        rc = send_message(&config->net, message_flag_new, buf, MAX_PAYLOAD_LEN);
-        if (0 != rc) break;
-
-        memset(buf, 0, sizeof(buf));
-
         rc = poll(&fds, 1, 1);
-        if (rc > 0 && fds.revents & POLLIN)
+        if (rc == 0) continue;
+        else if (!rc) break;
+        else if (fds.revents & POLLIN)
         {
-            printf("exit\n");
-            if ('s' == getchar()) config->mask_state &= 0x000000;
+            rc = user_input_handle(config);
+            if (0 != rc)
+            {
+                printf("user_input_handle failed\n");
+                return -1;
+            }
         }
+    }
+
+    rc = pthread_cancel(config->txthread_tid);
+    if (0 != rc)
+    {
+        printf("pthread_cancel tx_pthread failed\n");
+        return -1;
     }
 
     rc = pthread_cancel(config->handlers_tid);
     if (0 != rc)
     {
-        printf("pthread_cancel failed\n");
+        printf("pthread_cancel fds_handle failed\n");
         return -1;
     }
 
