@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MAX_PAYLOAD_LEN 1024
+#define MAX_PAYLOAD_LEN 128*1024
 
 enum message_flags
 {

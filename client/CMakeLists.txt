@@ -5,11 +5,14 @@ add_definitions(-Wall)
 
 add_executable(client
 	client.c
+	codec.c
 	handlers.c
 	net.c
 	sound.c)
 
 target_link_libraries(client
+	avcodec
+	avutil
 	pthread
 	pulse
 	pulse-simple)

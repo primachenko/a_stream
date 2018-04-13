@@ -100,6 +100,9 @@ void * tx_pthread(void * data)
     uint8_t buf[MAX_PAYLOAD_LEN];
     // config->mask_state |= 0x000001;
 
+    void * codec_out = NULL;
+    uint32_t codec_out_len = 0;
+
     while (1)
     {
         if (!config->mask_state & 0x000001)
@@ -110,7 +113,11 @@ void * tx_pthread(void * data)
         rc = sound_read_data(&config->sound, buf, MAX_PAYLOAD_LEN);
         if (0 != rc) break;
 
-        rc = send_message(&config->net, message_flag_new, buf, MAX_PAYLOAD_LEN);
+
+        rc = codec_encode_data(&config->codec, (void *) buf, MAX_PAYLOAD_LEN, &codec_out, &codec_out_len);
+        if (0 != rc) break;
+
+        rc = send_message(&config->net, message_flag_new, codec_out, codec_out_len);
         if (0 != rc) break;
 
         memset(buf, 0, sizeof(buf));

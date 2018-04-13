@@ -15,8 +15,18 @@
 #include <poll.h>
 #include <signal.h>
 #include <pthread.h>
+
 #include <pulse/simple.h>
 #include <pulse/error.h>
+
+#include <math.h>
+#include <libavutil/opt.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/channel_layout.h>
+#include <libavutil/common.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/mathematics.h>
+#include <libavutil/samplefmt.h>
 
 typedef struct
 {
@@ -42,8 +52,17 @@ typedef struct
 
 typedef struct
 {
+    AVCodec        * codec;
+    AVCodecContext * context;
+    AVFrame        * frame;
+    int              frame_size;
+} codec_t;
+
+typedef struct
+{
     net_t net;
     sound_t sound;
+    codec_t codec;
     uint8_t mask_state;
     pthread_t handlers_tid;
     pthread_t txthread_tid;

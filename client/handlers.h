@@ -4,6 +4,7 @@
 #include "config.h"
 #include "net.h"
 #include "sound.h"
+#include "codec.h"
 
 #define POLL_TIMEOUT 1
 

@@ -2,6 +2,7 @@
 #include "net.h"
 #include "sound.h"
 #include "handlers.h"
+#include "codec.h"
 
 int main(int argc, char const *argv[])
 {
@@ -84,6 +85,13 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    rc = codec_init(&config->codec);
+    if (0 != rc)
+    {
+        printf("codec_init failed\n");
+        return -1;
+    }
+
     rc = fds_init(&config->net);
     if (0 != rc)
     {
@@ -145,6 +153,13 @@ int main(int argc, char const *argv[])
     if (0 != rc)
     {
         printf("destroy_sound_device failed\n");
+        return -1;
+    }
+
+    rc = codec_deinit(&config->codec);
+    if (0 != rc)
+    {
+        printf("codec_deinit failed\n");
         return -1;
     }
 
