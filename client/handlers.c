@@ -3,9 +3,14 @@
 static int rx_message_handle(config_t * config, message_t * message)
 {
     int rc;
-
+    printf("rx handle\n");
+    printf("header.len= %d\n", message->header.length);
     rc = sound_write_data(&config->sound, message->payload, message->header.length);
-    if (0 != rc) return -1;
+    if (0 != rc)
+    {
+        printf("err message handle\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -63,7 +68,10 @@ void * fds_handle(void * data)
             {
                 rc = rx_fd_handle(config);
                 if (0 != rc)
+                {
+                    printf("err\n");
                     return NULL;
+                }
             }
             if (fds[1].revents & POLLIN)
             {
@@ -114,13 +122,17 @@ void * tx_pthread(void * data)
         if (0 != rc) break;
 
 
-        rc = codec_encode_data(&config->codec, (void *) buf, MAX_PAYLOAD_LEN, &codec_out, &codec_out_len);
+        // rc = codec_encode_data(&config->codec, (void *) buf, MAX_PAYLOAD_LEN, &codec_out, &codec_out_len);
+        // if (0 != rc) break;
+
+        // printf("codec_ou = %d\n", codec_out_len);
+        // rc = send_message(&config->net, message_flag_new, codec_out, codec_out_len);
+        // if (0 != rc) break;
+
+        rc = send_message(&config->net, message_flag_new, buf, MAX_PAYLOAD_LEN);
         if (0 != rc) break;
 
-        rc = send_message(&config->net, message_flag_new, codec_out, codec_out_len);
-        if (0 != rc) break;
-
-        if (codec_out) free(codec_out);
+        // if (codec_out) free(codec_out);
 
         memset(buf, 0, sizeof(buf));
     }
