@@ -120,6 +120,8 @@ void * tx_pthread(void * data)
         rc = send_message(&config->net, message_flag_new, codec_out, codec_out_len);
         if (0 != rc) break;
 
+        if (codec_out) free(codec_out);
+
         memset(buf, 0, sizeof(buf));
     }
 
